@@ -1,0 +1,33 @@
+name: One-time project migration
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Copy sanitized research project from legacy portfolio
+        run: |
+          git clone --depth 1 https://github.com/CheungLeeJR/my-first-ai-project.git /tmp/legacy
+          cp -a /tmp/legacy/caregiver-interest-model-reproduction/. .
+          rm -rf .git
+          git init
+          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git fetch origin main
+          git checkout -B main origin/main
+          cp -a /tmp/legacy/caregiver-interest-model-reproduction/. .
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Migrate sanitized caregiver research project"
+          git push origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
